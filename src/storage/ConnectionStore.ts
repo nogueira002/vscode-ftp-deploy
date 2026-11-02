@@ -2,12 +2,21 @@ import * as vscode from "vscode";
 import { Connection, Secrets } from "../types";
 
 const STORAGE_KEY = "ftpDeploy.connections";
+const AUTO_UPLOAD_KEY = "ftpDeploy.autoUpload";
 
 export class ConnectionStore {
   constructor(private context: vscode.ExtensionContext) {}
 
   all(): Connection[] {
     return this.context.globalState.get<Connection[]>(STORAGE_KEY, []);
+  }
+
+  isAutoUploadEnabled(): boolean {
+    return this.context.globalState.get<boolean>(AUTO_UPLOAD_KEY, true);
+  }
+
+  async setAutoUpload(enabled: boolean): Promise<void> {
+    await this.context.globalState.update(AUTO_UPLOAD_KEY, enabled);
   }
 
   get(id: string): Connection | undefined {
