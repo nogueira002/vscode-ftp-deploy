@@ -5,14 +5,14 @@ export function renderConfigForm(existing?: Connection): string {
   const selected = (protocol: string) =>
     existing?.protocol === protocol ? "selected" : "";
   const passwordHint = existing?.hasPassword
-    ? "(guardada — deixa vazio para manter)"
+    ? "(saved — leave empty to keep)"
     : "";
   const passphraseHint = existing?.hasPassphrase
-    ? "(guardada — deixa vazio para manter)"
+    ? "(saved — leave empty to keep)"
     : "";
 
   return `<!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,21 +41,21 @@ export function renderConfigForm(existing?: Connection): string {
 </style>
 </head>
 <body>
-  <h2>${existing ? "Editar servidor" : "Novo servidor"}</h2>
+  <h2>${existing ? "Edit server" : "New server"}</h2>
 
-  <label>Nome</label>
-  <input id="name" value="${value(existing?.name)}" placeholder="O meu servidor">
+  <label>Name</label>
+  <input id="name" value="${value(existing?.name)}" placeholder="My server">
 
   <div class="row">
     <div>
-      <label>Protocolo</label>
+      <label>Protocol</label>
       <select id="protocol">
         <option value="sftp" ${selected("sftp")}>SFTP (SSH)</option>
         <option value="ftp" ${selected("ftp")}>FTP</option>
       </select>
     </div>
     <div>
-      <label>Porta</label>
+      <label>Port</label>
       <input id="port" type="number" value="${existing?.port ?? 22}">
     </div>
   </div>
@@ -63,25 +63,25 @@ export function renderConfigForm(existing?: Connection): string {
   <label>Host</label>
   <input id="host" value="${value(existing?.host)}" placeholder="exemplo.com ou 1.2.3.4">
 
-  <label>Utilizador</label>
-  <input id="username" value="${value(existing?.username)}" placeholder="utilizador">
+  <label>User</label>
+  <input id="username" value="${value(existing?.username)}" placeholder="user">
 
   <label>Password</label>
   <input id="password" type="password" placeholder="${passwordHint}">
-  <div class="hint">Guardada no cofre seguro do VS Code (SecretStorage).</div>
+  <div class="hint">Stored in the VS Code secure store (SecretStorage).</div>
 
-  <label>Caminho da chave privada (SFTP, opcional)</label>
+  <label>Private key path (SFTP, optional)</label>
   <input id="privateKeyPath" value="${value(existing?.privateKeyPath)}" placeholder="/Users/tu/.ssh/id_ed25519">
 
-  <label>Passphrase da chave (opcional)</label>
+  <label>Key passphrase (optional)</label>
   <input id="passphrase" type="password" placeholder="${passphraseHint}">
 
-  <label>Pasta remota</label>
+  <label>Remote path</label>
   <input id="remotePath" value="${value(existing?.remotePath) || "/"}" placeholder="/public_html">
 
   <div class="buttons">
-    <button class="secondary" id="btnTest">Testar ligacao</button>
-    <button id="btnSave">Guardar</button>
+    <button class="secondary" id="btnTest">Test connection</button>
+    <button id="btnSave">Save</button>
   </div>
 
   <div id="status"></div>
@@ -109,7 +109,7 @@ export function renderConfigForm(existing?: Connection): string {
   });
   window.addEventListener("message", (ev) => {
     const m = ev.data;
-    if (m.type === "testing") { setStatus("info", "A ligar..."); }
+    if (m.type === "testing") { setStatus("info", "Connecting..."); }
     else if (m.type === "testResult") { setStatus(m.ok ? "ok" : "err", m.message); }
   });
 </script>

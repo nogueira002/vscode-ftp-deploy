@@ -24,7 +24,7 @@ export class ConfigPanel {
   ): void {
     const panel = vscode.window.createWebviewPanel(
       "ftpDeployConfig",
-      existing ? `Editar: ${existing.name}` : "Novo servidor",
+      existing ? `Edit: ${existing.name}` : "New server",
       vscode.ViewColumn.One,
       { enableScripts: true, retainContextWhenHidden: true }
     );
@@ -57,10 +57,10 @@ export class ConfigPanel {
       this.post({
         type: "testResult",
         ok: true,
-        message: `Ligacao OK. "${conn.remotePath}" tem ${entries.length} item(s).`,
+        message: `Connected. "${conn.remotePath}" has ${entries.length} item(s).`,
       });
     } catch (error) {
-      this.post({ type: "testResult", ok: false, message: `Falhou: ${this.message(error)}` });
+      this.post({ type: "testResult", ok: false, message: `Failed: ${this.message(error)}` });
     } finally {
       await client.end();
     }
@@ -72,13 +72,13 @@ export class ConfigPanel {
       this.post({
         type: "testResult",
         ok: false,
-        message: "Preenche pelo menos host e utilizador.",
+        message: "Fill in at least host and user.",
       });
       return;
     }
     await this.store.save(conn, this.toSecrets(data));
     this.onSaved();
-    vscode.window.showInformationMessage(`Servidor "${conn.name}" guardado.`);
+    vscode.window.showInformationMessage(`Server "${conn.name}" saved.`);
     this.panel.dispose();
   }
 
@@ -86,7 +86,7 @@ export class ConfigPanel {
     const protocol = data.protocol === "ftp" ? "ftp" : "sftp";
     return {
       id: this.existing?.id ?? `conn-${Date.now()}`,
-      name: data.name.trim() || "Servidor",
+      name: data.name.trim() || "Server",
       protocol,
       host: data.host.trim(),
       port: Number(data.port) || (protocol === "ftp" ? 21 : 22),

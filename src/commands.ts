@@ -55,11 +55,11 @@ async function deleteConnection(
     return;
   }
   const answer = await vscode.window.showWarningMessage(
-    `Remover o servidor "${conn.name}"?`,
+    `Remove server "${conn.name}"?`,
     { modal: true },
-    "Remover"
+    "Remove"
   );
-  if (answer === "Remover") {
+  if (answer === "Remove") {
     await store.delete(conn.id);
     tree.refresh();
   }
@@ -72,14 +72,14 @@ async function testConnection(
   if (!conn) {
     return;
   }
-  await withProgress(`A testar "${conn.name}"...`, async () => {
+  await withProgress(`Testing "${conn.name}"...`, async () => {
     try {
       const count = await service.test(conn);
       vscode.window.showInformationMessage(
-        `"${conn.name}" OK — ${count} item(s) em ${conn.remotePath}.`
+        `"${conn.name}" OK — ${count} item(s) in ${conn.remotePath}.`
       );
     } catch (error) {
-      vscode.window.showErrorMessage(`"${conn.name}" falhou: ${message(error)}`);
+      vscode.window.showErrorMessage(`"${conn.name}" failed: ${message(error)}`);
     }
   });
 }
@@ -96,7 +96,7 @@ async function openRemoteFile(
     const doc = await vscode.workspace.openTextDocument(localPath);
     await vscode.window.showTextDocument(doc);
   } catch (error) {
-    vscode.window.showErrorMessage(`Nao consegui abrir: ${message(error)}`);
+    vscode.window.showErrorMessage(`Could not open: ${message(error)}`);
   }
 }
 
@@ -109,7 +109,7 @@ async function download(
   }
   const localRoot = workspaceRoot();
   if (!localRoot) {
-    vscode.window.showErrorMessage("Abre primeiro uma pasta para onde descarregar.");
+    vscode.window.showErrorMessage("Open a folder to download into first.");
     return;
   }
 
@@ -120,12 +120,12 @@ async function download(
   const localTarget =
     node.kind === "connection" ? localRoot : path.join(localRoot, name);
 
-  await withProgress(`Download de "${name}"...`, async () => {
+  await withProgress(`Downloading "${name}"...`, async () => {
     try {
       await service.download(node.conn, remotePath, isDirectory, localTarget);
-      vscode.window.showInformationMessage(`Download concluido: ${localTarget}`);
+      vscode.window.showInformationMessage(`Download complete: ${localTarget}`);
     } catch (error) {
-      vscode.window.showErrorMessage(`Download falhou: ${message(error)}`);
+      vscode.window.showErrorMessage(`Download failed: ${message(error)}`);
     }
   });
 }
@@ -136,13 +136,13 @@ async function uploadFile(
 ): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showErrorMessage("Nao ha ficheiro aberto para enviar.");
+    vscode.window.showErrorMessage("No active file to upload.");
     return;
   }
   const localPath = editor.document.uri.fsPath;
   const localRoot = workspaceRoot();
   if (!localRoot || !localPath.startsWith(localRoot)) {
-    vscode.window.showErrorMessage("O ficheiro tem de estar dentro da pasta aberta.");
+    vscode.window.showErrorMessage("The file must be inside the open folder.");
     return;
   }
 
@@ -154,12 +154,12 @@ async function uploadFile(
   const relative = path.relative(localRoot, localPath).split(path.sep).join("/");
   const remotePath = conn.remotePath.replace(/\/$/, "") + "/" + relative;
 
-  await withProgress(`Upload para "${conn.name}"...`, async () => {
+  await withProgress(`Uploading to "${conn.name}"...`, async () => {
     try {
       await service.upload(conn, localPath, remotePath);
-      vscode.window.showInformationMessage(`Enviado: ${remotePath}`);
+      vscode.window.showInformationMessage(`Uploaded: ${remotePath}`);
     } catch (error) {
-      vscode.window.showErrorMessage(`Upload falhou: ${message(error)}`);
+      vscode.window.showErrorMessage(`Upload failed: ${message(error)}`);
     }
   });
 }
@@ -169,7 +169,7 @@ async function pickConnection(
 ): Promise<Connection | undefined> {
   const connections = store.all();
   if (connections.length === 0) {
-    vscode.window.showErrorMessage("Nao ha servidores configurados.");
+    vscode.window.showErrorMessage("No servers configured.");
     return undefined;
   }
   const choice = await vscode.window.showQuickPick(
@@ -178,7 +178,7 @@ async function pickConnection(
       description: conn.host,
       conn,
     })),
-    { placeHolder: "Enviar para que servidor?" }
+    { placeHolder: "Upload to which server?" }
   );
   return choice?.conn;
 }

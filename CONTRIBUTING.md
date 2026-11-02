@@ -1,45 +1,45 @@
-# Como contribuir
+# Contributing
 
-Obrigado pelo interesse em melhorar o FTP Deploy Connector!
+Thanks for your interest in improving FTP Deploy Connector!
 
-## Ambiente de desenvolvimento
+## Development setup
 
-1. Faz fork e clona o repositorio.
-2. Instala as dependencias:
+1. Fork and clone the repository.
+2. Install dependencies:
    ```bash
    npm install
    ```
-3. Compila (ou deixa a compilar em modo watch):
+3. Compile (or run it in watch mode):
    ```bash
    npm run watch
    ```
-4. Carrega **F5** no VS Code para abrir o *Extension Development Host* com a
-   extensao carregada.
+4. Press **F5** in VS Code to open the *Extension Development Host* with the
+   extension loaded.
 
-## Estrutura do codigo
+## Code layout
 
-| Ficheiro | Responsabilidade |
+| File | Responsibility |
 |---|---|
-| `src/extension.ts` | Ponto de entrada; liga as pecas |
-| `src/commands.ts` | Regista os comandos e trata da interface |
-| `src/types.ts` | Modelo de dados |
-| `src/remote/RemoteClient.ts` | Interface comum de cliente remoto |
-| `src/remote/SftpClient.ts` | Implementacao SFTP |
-| `src/remote/FtpClient.ts` | Implementacao FTP |
-| `src/remote/clientFactory.ts` | Escolhe a implementacao pelo protocolo |
-| `src/services/TransferService.ts` | Download, upload e teste de ligacao |
-| `src/storage/ConnectionStore.ts` | Persistencia e segredos |
-| `src/ui/RemoteTreeProvider.ts` | Arvore da barra lateral |
-| `src/ui/ConfigPanel.ts` | Logica do painel de configuracao |
-| `src/ui/configFormHtml.ts` | HTML do formulario |
+| `src/extension.ts` | Entry point; wires the pieces together |
+| `src/commands.ts` | Registers commands and handles the UI |
+| `src/types.ts` | Data model |
+| `src/remote/RemoteClient.ts` | Common remote client interface |
+| `src/remote/SftpClient.ts` | SFTP implementation |
+| `src/remote/FtpClient.ts` | FTP implementation |
+| `src/remote/clientFactory.ts` | Picks the implementation by protocol |
+| `src/services/TransferService.ts` | Download, upload and connection test |
+| `src/storage/ConnectionStore.ts` | Persistence and secrets |
+| `src/ui/RemoteTreeProvider.ts` | Sidebar tree |
+| `src/ui/ConfigPanel.ts` | Configuration panel logic |
+| `src/ui/configFormHtml.ts` | Configuration form HTML |
 
-## Antes de abrir um Pull Request
+## Before opening a Pull Request
 
-- Garante que `npm run compile` corre sem erros.
-- Descreve claramente o que mudaste e porque.
-- Uma funcionalidade ou correcao por PR, sempre que possivel.
+- Make sure `npm run compile` runs without errors.
+- Clearly describe what you changed and why.
+- One feature or fix per PR whenever possible.
 
-## Reportar problemas
+## Reporting issues
 
-Abre uma [issue](https://github.com/nogueira002/vscode-ftp-deploy/issues)
-com passos para reproduzir, a versao do VS Code e o sistema operativo.
+Open an [issue](https://github.com/nogueira002/vscode-ftp-deploy/issues) with
+steps to reproduce, your VS Code version, and your operating system.

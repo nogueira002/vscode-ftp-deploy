@@ -1,7 +1,7 @@
 {
   "name": "ftp-deploy-connector",
   "displayName": "FTP Deploy Connector",
-  "description": "Liga-te a servidores por SFTP/FTP, navega os ficheiros remotos numa arvore e faz download/upload — estilo PhpStorm.",
+  "description": "Connect to servers over SFTP/FTP, browse remote files in a tree, and download/upload — PhpStorm style.",
   "version": "0.1.0",
   "publisher": "nogueira002",
   "license": "MIT",
@@ -49,7 +49,7 @@
       "ftpDeploy": [
         {
           "id": "ftpDeployServers",
-          "name": "Servidores",
+          "name": "Servers",
           "icon": "media/server.svg"
         }
       ]
@@ -57,48 +57,48 @@
     "viewsWelcome": [
       {
         "view": "ftpDeployServers",
-        "contents": "Ainda nao tens servidores configurados.\n[Adicionar servidor](command:ftpDeploy.addConnection)"
+        "contents": "No servers configured yet.\n[Add server](command:ftpDeploy.addConnection)"
       }
     ],
     "commands": [
       {
         "command": "ftpDeploy.addConnection",
-        "title": "FTP Deploy: Adicionar servidor",
+        "title": "FTP Deploy: Add server",
         "icon": "$(add)"
       },
       {
         "command": "ftpDeploy.editConnection",
-        "title": "Editar servidor",
+        "title": "FTP Deploy: Edit server",
         "icon": "$(edit)"
       },
       {
         "command": "ftpDeploy.deleteConnection",
-        "title": "Remover servidor",
+        "title": "FTP Deploy: Remove server",
         "icon": "$(trash)"
       },
       {
         "command": "ftpDeploy.testConnection",
-        "title": "Testar ligacao",
+        "title": "FTP Deploy: Test connection",
         "icon": "$(plug)"
       },
       {
         "command": "ftpDeploy.refresh",
-        "title": "Atualizar",
+        "title": "FTP Deploy: Refresh",
         "icon": "$(refresh)"
       },
       {
         "command": "ftpDeploy.download",
-        "title": "Download (remoto -> local)",
+        "title": "FTP Deploy: Download (remote -> local)",
         "icon": "$(cloud-download)"
       },
       {
         "command": "ftpDeploy.uploadFile",
-        "title": "Upload do ficheiro aberto (local -> remoto)",
+        "title": "FTP Deploy: Upload active file (local -> remote)",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "ftpDeploy.openRemoteFile",
-        "title": "Abrir ficheiro remoto"
+        "title": "FTP Deploy: Open remote file"
       }
     ],
     "menus": {

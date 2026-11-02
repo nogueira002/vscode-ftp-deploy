@@ -59,7 +59,7 @@ export class RemoteTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     if (!entry.isDirectory) {
       item.command = {
         command: "ftpDeploy.openRemoteFile",
-        title: "Abrir",
+        title: "Open",
         arguments: [node],
       };
     }
@@ -78,7 +78,7 @@ export class RemoteTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return this.sort(entries).map((entry) => ({ kind: "entry", conn, entry }));
     } catch (error) {
       vscode.window.showErrorMessage(
-        `Erro a listar "${conn.name}": ${this.message(error)}`
+        `Error listing "${conn.name}": ${this.message(error)}`
       );
       return [];
     } finally {

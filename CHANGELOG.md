@@ -1,18 +1,18 @@
 # Changelog
 
-Todas as alteracoes relevantes deste projeto sao documentadas aqui.
-O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/)
-e o projeto usa [Versionamento Semantico](https://semver.org/lang/pt-BR/).
+All notable changes to this project are documented here. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project
+follows [Semantic Versioning](https://semver.org/).
 
-## [Nao lancado]
+## [Unreleased]
 
 ## [0.1.0] - 2026-11-02
 
-### Adicionado
-- Configuracao de servidores por SFTP e FTP atraves de um painel visual
-  com botao "Testar ligacao".
-- Arvore de ficheiros remotos na barra lateral (navegacao estilo PhpStorm).
-- Download de ficheiros e pastas (remoto para local).
-- Upload do ficheiro aberto (local para remoto).
-- Abertura de ficheiros remotos diretamente no editor.
-- Armazenamento de passwords e passphrases no SecretStorage cifrado do VS Code.
+### Added
+- Configure servers over SFTP and FTP through a visual panel with a
+  "Test connection" button.
+- Remote file tree in the sidebar (PhpStorm-style browsing).
+- Download files and folders (remote to local).
+- Upload the active file (local to remote).
+- Open remote files directly in the editor.
+- Passwords and passphrases stored in the VS Code encrypted SecretStorage.
