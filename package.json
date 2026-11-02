@@ -1,0 +1,156 @@
+{
+  "name": "ftp-deploy-connector",
+  "displayName": "FTP Deploy Connector",
+  "description": "Liga-te a servidores por SFTP/FTP, navega os ficheiros remotos numa arvore e faz download/upload — estilo PhpStorm.",
+  "version": "0.1.0",
+  "publisher": "nogueira002",
+  "license": "MIT",
+  "author": {
+    "name": "Ricardo Nogueira"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nogueira002/vscode-ftp-deploy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nogueira002/vscode-ftp-deploy/issues"
+  },
+  "homepage": "https://github.com/nogueira002/vscode-ftp-deploy#readme",
+  "keywords": [
+    "ftp",
+    "sftp",
+    "deploy",
+    "deployment",
+    "remote",
+    "upload",
+    "download",
+    "sync"
+  ],
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ftpDeploy",
+          "title": "FTP Deploy",
+          "icon": "media/server.svg"
+        }
+      ]
+    },
+    "views": {
+      "ftpDeploy": [
+        {
+          "id": "ftpDeployServers",
+          "name": "Servidores",
+          "icon": "media/server.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "ftpDeployServers",
+        "contents": "Ainda nao tens servidores configurados.\n[Adicionar servidor](command:ftpDeploy.addConnection)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "ftpDeploy.addConnection",
+        "title": "FTP Deploy: Adicionar servidor",
+        "icon": "$(add)"
+      },
+      {
+        "command": "ftpDeploy.editConnection",
+        "title": "Editar servidor",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "ftpDeploy.deleteConnection",
+        "title": "Remover servidor",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "ftpDeploy.testConnection",
+        "title": "Testar ligacao",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "ftpDeploy.refresh",
+        "title": "Atualizar",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ftpDeploy.download",
+        "title": "Download (remoto -> local)",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "ftpDeploy.uploadFile",
+        "title": "Upload do ficheiro aberto (local -> remoto)",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "ftpDeploy.openRemoteFile",
+        "title": "Abrir ficheiro remoto"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ftpDeploy.addConnection",
+          "when": "view == ftpDeployServers",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ftpDeploy.refresh",
+          "when": "view == ftpDeployServers",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "ftpDeploy.testConnection",
+          "when": "view == ftpDeployServers && viewItem == connection",
+          "group": "inline@1"
+        },
+        {
+          "command": "ftpDeploy.editConnection",
+          "when": "view == ftpDeployServers && viewItem == connection",
+          "group": "1_manage@1"
+        },
+        {
+          "command": "ftpDeploy.deleteConnection",
+          "when": "view == ftpDeployServers && viewItem == connection",
+          "group": "1_manage@2"
+        },
+        {
+          "command": "ftpDeploy.download",
+          "when": "view == ftpDeployServers && (viewItem == remoteFile || viewItem == remoteDir || viewItem == connection)",
+          "group": "inline@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "basic-ftp": "^5.0.5",
+    "ssh2-sftp-client": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/ssh2-sftp-client": "^9.0.4",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}
