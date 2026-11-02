@@ -5,6 +5,9 @@ export const DEFAULT_EXCLUDES = [
   "backups",
   "logs",
   ".DS_Store",
+  "venv",
+  ".venv",
+  "__pycache__",
 ];
 
 export function isExcludedName(name: string): boolean {

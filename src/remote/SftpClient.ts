@@ -37,6 +37,7 @@ export class SftpClient implements RemoteClient {
         name: item.name,
         path: joinRemote(remoteDir, item.name),
         isDirectory: item.type === "d",
+        isSymlink: item.type === "l",
         size: item.size,
       }));
   }

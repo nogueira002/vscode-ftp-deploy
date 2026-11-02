@@ -17,6 +17,7 @@ export interface RemoteEntry {
   name: string;
   path: string;
   isDirectory: boolean;
+  isSymlink: boolean;
   size: number;
 }
 

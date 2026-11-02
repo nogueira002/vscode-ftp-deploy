@@ -28,6 +28,7 @@ export class FtpClient implements RemoteClient {
         name: item.name,
         path: joinRemote(remoteDir, item.name),
         isDirectory: item.isDirectory,
+        isSymlink: item.isSymbolicLink,
         size: item.size,
       }));
   }
