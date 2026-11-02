@@ -2,7 +2,7 @@
   "name": "ftp-deploy-connector",
   "displayName": "FTP Deploy Connector",
   "description": "Connect to servers over SFTP/FTP, browse remote files in a tree, and download/upload — PhpStorm style.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "nogueira002",
   "license": "MIT",
   "author": {
@@ -33,7 +33,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -99,6 +101,16 @@
       {
         "command": "ftpDeploy.openRemoteFile",
         "title": "FTP Deploy: Open remote file"
+      },
+      {
+        "command": "ftpDeploy.openSettings",
+        "title": "FTP Deploy: Settings",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "ftpDeploy.uploadToServer",
+        "title": "FTP Deploy: Upload to server",
+        "icon": "$(cloud-upload)"
       }
     ],
     "menus": {
@@ -112,6 +124,25 @@
           "command": "ftpDeploy.refresh",
           "when": "view == ftpDeployServers",
           "group": "navigation@2"
+        },
+        {
+          "command": "ftpDeploy.openSettings",
+          "when": "view == ftpDeployServers",
+          "group": "navigation@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "ftpDeploy.uploadToServer",
+          "when": "resourceScheme == file",
+          "group": "ftpDeploy@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "ftpDeploy.uploadToServer",
+          "when": "resourceScheme == file",
+          "group": "ftpDeploy@1"
         }
       ],
       "view/item/context": [

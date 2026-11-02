@@ -1,10 +1,15 @@
+import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ConnectionStore } from "./storage/ConnectionStore";
 import { TransferService } from "./services/TransferService";
 import { ConfigPanel } from "./ui/ConfigPanel";
+import { SettingsPanel } from "./ui/SettingsPanel";
 import { RemoteTreeProvider, TreeNode } from "./ui/RemoteTreeProvider";
 import { Connection } from "./types";
+
+const SKIP = "__skip__";
+const EXCLUDED = ["node_modules", ".git"];
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -12,23 +17,34 @@ export function registerCommands(
   tree: RemoteTreeProvider
 ): void {
   const service = new TransferService(store);
+  const autoTargets = new Map<string, string>();
+
   const register = (id: string, handler: (...args: any[]) => unknown) =>
     context.subscriptions.push(vscode.commands.registerCommand(id, handler));
 
+  const onServersChanged = () => {
+    tree.refresh();
+    SettingsPanel.refresh();
+  };
+
   register("ftpDeploy.refresh", () => tree.refresh());
 
+  register("ftpDeploy.openSettings", () =>
+    SettingsPanel.show(store, service, tree)
+  );
+
   register("ftpDeploy.addConnection", () =>
-    ConfigPanel.show(store, () => tree.refresh())
+    ConfigPanel.show(store, onServersChanged)
   );
 
   register("ftpDeploy.editConnection", (node?: TreeNode) => {
     if (node) {
-      ConfigPanel.show(store, () => tree.refresh(), node.conn);
+      ConfigPanel.show(store, onServersChanged, node.conn);
     }
   });
 
   register("ftpDeploy.deleteConnection", (node?: TreeNode) =>
-    deleteConnection(store, tree, node?.conn)
+    deleteConnection(store, onServersChanged, node?.conn)
   );
 
   register("ftpDeploy.testConnection", (node?: TreeNode) =>
@@ -39,16 +55,26 @@ export function registerCommands(
     openRemoteFile(service, node)
   );
 
-  register("ftpDeploy.download", (node?: TreeNode) =>
-    download(service, node)
+  register("ftpDeploy.download", (node?: TreeNode) => download(service, node));
+
+  register("ftpDeploy.uploadFile", () =>
+    uploadWithPick(store, service, activeFilePath())
   );
 
-  register("ftpDeploy.uploadFile", () => uploadFile(store, service));
+  register("ftpDeploy.uploadToServer", (uri?: vscode.Uri) =>
+    uploadWithPick(store, service, uri?.fsPath ?? activeFilePath())
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((doc) =>
+      autoUpload(store, service, autoTargets, doc.uri.fsPath)
+    )
+  );
 }
 
 async function deleteConnection(
   store: ConnectionStore,
-  tree: RemoteTreeProvider,
+  onChanged: () => void,
   conn?: Connection
 ): Promise<void> {
   if (!conn) {
@@ -61,7 +87,7 @@ async function deleteConnection(
   );
   if (answer === "Remove") {
     await store.delete(conn.id);
-    tree.refresh();
+    onChanged();
   }
 }
 
@@ -130,47 +156,101 @@ async function download(
   });
 }
 
-async function uploadFile(
+async function uploadWithPick(
   store: ConnectionStore,
-  service: TransferService
+  service: TransferService,
+  localPath?: string
 ): Promise<void> {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    vscode.window.showErrorMessage("No active file to upload.");
+  if (!localPath) {
+    vscode.window.showErrorMessage("No file selected to upload.");
     return;
   }
-  const localPath = editor.document.uri.fsPath;
+  const conn = await pickConnection(store);
+  if (conn) {
+    await uploadResource(service, conn, localPath);
+  }
+}
+
+async function autoUpload(
+  store: ConnectionStore,
+  service: TransferService,
+  autoTargets: Map<string, string>,
+  localPath: string
+): Promise<void> {
+  if (!store.isAutoUploadEnabled()) {
+    return;
+  }
   const localRoot = workspaceRoot();
-  if (!localRoot || !localPath.startsWith(localRoot)) {
+  if (!localRoot || !isInside(localRoot, localPath) || isExcluded(localPath)) {
+    return;
+  }
+  const connections = store.all();
+  if (connections.length === 0) {
+    return;
+  }
+
+  let conn: Connection | undefined;
+  if (connections.length === 1) {
+    conn = connections[0];
+  } else {
+    const remembered = autoTargets.get(localPath);
+    if (remembered === SKIP) {
+      return;
+    }
+    conn = remembered
+      ? connections.find((item) => item.id === remembered)
+      : undefined;
+    if (!conn) {
+      conn = await pickConnection(
+        store,
+        `Auto-upload "${path.basename(localPath)}" to which server?`
+      );
+      autoTargets.set(localPath, conn ? conn.id : SKIP);
+    }
+  }
+  if (conn) {
+    await uploadResource(service, conn, localPath);
+  }
+}
+
+async function uploadResource(
+  service: TransferService,
+  conn: Connection,
+  localPath: string
+): Promise<void> {
+  const localRoot = workspaceRoot();
+  if (!localRoot || !isInside(localRoot, localPath)) {
     vscode.window.showErrorMessage("The file must be inside the open folder.");
     return;
   }
-
-  const conn = await pickConnection(store);
-  if (!conn) {
-    return;
-  }
-
+  const isDirectory = fs.statSync(localPath).isDirectory();
   const relative = path.relative(localRoot, localPath).split(path.sep).join("/");
   const remotePath = conn.remotePath.replace(/\/$/, "") + "/" + relative;
 
-  await withProgress(`Uploading to "${conn.name}"...`, async () => {
-    try {
-      await service.upload(conn, localPath, remotePath);
-      vscode.window.showInformationMessage(`Uploaded: ${remotePath}`);
-    } catch (error) {
-      vscode.window.showErrorMessage(`Upload failed: ${message(error)}`);
+  await withProgress(
+    `Uploading "${path.basename(localPath)}" to "${conn.name}"...`,
+    async () => {
+      try {
+        await service.uploadPath(conn, localPath, remotePath, isDirectory);
+        vscode.window.showInformationMessage(`Uploaded: ${remotePath}`);
+      } catch (error) {
+        vscode.window.showErrorMessage(`Upload failed: ${message(error)}`);
+      }
     }
-  });
+  );
 }
 
 async function pickConnection(
-  store: ConnectionStore
+  store: ConnectionStore,
+  placeHolder = "Upload to which server?"
 ): Promise<Connection | undefined> {
   const connections = store.all();
   if (connections.length === 0) {
     vscode.window.showErrorMessage("No servers configured.");
     return undefined;
+  }
+  if (connections.length === 1) {
+    return connections[0];
   }
   const choice = await vscode.window.showQuickPick(
     connections.map((conn) => ({
@@ -178,14 +258,28 @@ async function pickConnection(
       description: conn.host,
       conn,
     })),
-    { placeHolder: "Upload to which server?" }
+    { placeHolder }
   );
   return choice?.conn;
+}
+
+function activeFilePath(): string | undefined {
+  return vscode.window.activeTextEditor?.document.uri.fsPath;
 }
 
 function workspaceRoot(): string | undefined {
   const folders = vscode.workspace.workspaceFolders;
   return folders && folders.length > 0 ? folders[0].uri.fsPath : undefined;
+}
+
+function isInside(root: string, target: string): boolean {
+  const relative = path.relative(root, target);
+  return !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
+function isExcluded(localPath: string): boolean {
+  const segments = localPath.split(path.sep);
+  return EXCLUDED.some((name) => segments.includes(name));
 }
 
 function withProgress(title: string, task: () => Promise<void>): Thenable<void> {
