@@ -61,7 +61,7 @@ export function renderConfigForm(existing?: Connection): string {
   </div>
 
   <label>Host</label>
-  <input id="host" value="${value(existing?.host)}" placeholder="exemplo.com ou 1.2.3.4">
+  <input id="host" value="${value(existing?.host)}" placeholder="example.com or 1.2.3.4">
 
   <label>User</label>
   <input id="username" value="${value(existing?.username)}" placeholder="user">
@@ -71,7 +71,7 @@ export function renderConfigForm(existing?: Connection): string {
   <div class="hint">Stored in the VS Code secure store (SecretStorage).</div>
 
   <label>Private key path (SFTP, optional)</label>
-  <input id="privateKeyPath" value="${value(existing?.privateKeyPath)}" placeholder="/Users/tu/.ssh/id_ed25519">
+  <input id="privateKeyPath" value="${value(existing?.privateKeyPath)}" placeholder="/Users/you/.ssh/id_ed25519">
 
   <label>Key passphrase (optional)</label>
   <input id="passphrase" type="password" placeholder="${passphraseHint}">
