@@ -28,6 +28,8 @@ panel, browse remote files in a sidebar tree, and download or upload files.
 - **Auto-upload on save** (on by default). With several servers it asks which
   one, once per file per session.
 - **Download** files and folders (remote to local).
+- **Progress with a cancel button** on transfers, plus automatic excludes
+  (`node_modules`, `.git`, `.cache`, `backups`, `logs`).
 - Supports **SFTP** (with private key and passphrase) and **FTP**.
 - Passwords and passphrases are stored in the VS Code **encrypted
   SecretStorage** — never in plain text.
@@ -44,7 +46,7 @@ panel, browse remote files in a sidebar tree, and download or upload files.
      **Install from VSIX...** -> pick the file.
    - **Terminal:**
      ```bash
-     code --install-extension ftp-deploy-connector-0.2.0.vsix
+     code --install-extension ftp-deploy-connector-0.2.1.vsix
      ```
 3. Reload the window (`Developer: Reload Window`). The **FTP Deploy** icon
    appears in the activity bar.

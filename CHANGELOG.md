@@ -6,6 +6,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-02
+
+### Added
+- Cancel button on downloads and uploads.
+- Progress details in the notification: current file, "x/y" count, and
+  estimated time left.
+- Automatic excludes for downloads and uploads: node_modules, .git, .cache,
+  backups, logs, .DS_Store.
+
 ## [0.2.0] - 2026-11-02
 
 ### Added
