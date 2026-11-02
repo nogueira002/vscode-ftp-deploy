@@ -21,9 +21,13 @@ panel, browse remote files in a sidebar tree, and download or upload files.
 
 - **Visual configuration panel** with a **Test connection** button — no JSON
   files to edit by hand.
+- **Settings page** to manage multiple servers and toggle auto-upload.
 - **Remote file tree** in the sidebar: browse folders and open server files.
+- **Right-click upload** on any file or folder in the Explorer. With several
+  servers configured, it asks which one — just like PhpStorm.
+- **Auto-upload on save** (on by default). With several servers it asks which
+  one, once per file per session.
 - **Download** files and folders (remote to local).
-- **Upload** the active file (local to remote).
 - Supports **SFTP** (with private key and passphrase) and **FTP**.
 - Passwords and passphrases are stored in the VS Code **encrypted
   SecretStorage** — never in plain text.
@@ -40,7 +44,7 @@ panel, browse remote files in a sidebar tree, and download or upload files.
      **Install from VSIX...** -> pick the file.
    - **Terminal:**
      ```bash
-     code --install-extension ftp-deploy-connector-0.1.0.vsix
+     code --install-extension ftp-deploy-connector-0.2.0.vsix
      ```
 3. Reload the window (`Developer: Reload Window`). The **FTP Deploy** icon
    appears in the activity bar.
@@ -69,19 +73,23 @@ Open the folder in VS Code and press **F5**. A second window
 1. Open your project folder (the download destination).
 2. Click the **FTP Deploy** icon in the activity bar (left).
 3. Click **+** (Add server) -> fill in the form -> **Test connection** ->
-   **Save**.
-4. Expand the server in the tree to browse the remote side.
-5. Right-click a file or folder -> **Download**. With a local file open, run
-   `FTP Deploy: Upload active file`.
+   **Save**. Add as many servers as you need.
+4. Expand a server in the tree to browse the remote side. Right-click a remote
+   file or folder -> **Download**.
+5. To upload, right-click a local file or folder in the Explorer ->
+   **FTP Deploy: Upload to server**. With several servers, pick which one.
+6. With **auto-upload on save** enabled (the gear -> Settings), saving a file
+   uploads it automatically.
 
 ## Commands
 
 | Command | Action |
 |---|---|
 | `FTP Deploy: Add server` | Open the configuration panel |
+| `FTP Deploy: Settings` | Open the settings page |
 | `FTP Deploy: Test connection` | Connect and list the remote folder |
+| `FTP Deploy: Upload to server` | Upload the selected file or folder |
 | `FTP Deploy: Download (remote -> local)` | Download a file or folder |
-| `FTP Deploy: Upload active file` | Upload the active file |
 | `FTP Deploy: Refresh` | Reload the tree |
 
 ## Security

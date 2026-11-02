@@ -32,6 +32,8 @@ Thanks for your interest in improving FTP Deploy Connector!
 | `src/ui/RemoteTreeProvider.ts` | Sidebar tree |
 | `src/ui/ConfigPanel.ts` | Configuration panel logic |
 | `src/ui/configFormHtml.ts` | Configuration form HTML |
+| `src/ui/SettingsPanel.ts` | Settings page logic |
+| `src/ui/settingsHtml.ts` | Settings page HTML |
 
 ## Before opening a Pull Request
 

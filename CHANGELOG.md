@@ -6,6 +6,17 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-02
+
+### Added
+- Settings page (gear icon in the view) to manage servers and toggle
+  auto-upload.
+- Upload via right-click on a file or folder in the Explorer (and in the editor).
+  With several servers it asks which one.
+- Auto-upload on save (on by default). With several servers it asks which one,
+  once per file per session.
+- Folder upload (recursive) over SFTP and FTP.
+
 ## [0.1.0] - 2026-11-02
 
 ### Added
