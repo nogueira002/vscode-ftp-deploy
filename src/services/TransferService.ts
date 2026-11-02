@@ -19,6 +19,10 @@ export interface TransferProgress {
   cancelled(): boolean;
 }
 
+export type ConflictDecision = "overwrite" | "skip" | "cancel";
+
+export type ConflictResolver = (existingCount: number) => Promise<ConflictDecision>;
+
 interface FilePair {
   remote: string;
   local: string;
@@ -40,19 +44,22 @@ export class TransferService {
     remotePath: string,
     isDirectory: boolean,
     localTarget: string,
-    progress?: TransferProgress
+    progress?: TransferProgress,
+    confirm?: ConflictResolver
   ): Promise<void> {
-    await this.run(conn, async (client) => {
-      if (!isDirectory) {
-        await this.downloadOne(client, remotePath, localTarget, progress);
-        return;
-      }
-      progress?.update("Scanning...", 0, 0, 0, 0);
-      const files = await this.collectRemote(client, remotePath, localTarget, progress);
-      await this.transfer(files, progress, (file) =>
-        client.downloadFile(file.remote, file.local)
-      );
-    });
+    await this.transferParallel(
+      conn,
+      progress,
+      confirm,
+      async (client) => {
+        if (!isDirectory) {
+          return [{ remote: remotePath, local: localTarget, size: 1 }];
+        }
+        progress?.update("Scanning...", 0, 0, 0, 0);
+        return this.collectRemote(client, remotePath, localTarget, progress);
+      },
+      (client, file) => client.downloadFile(file.remote, file.local)
+    );
   }
 
   async uploadPath(
@@ -62,17 +69,20 @@ export class TransferService {
     isDirectory: boolean,
     progress?: TransferProgress
   ): Promise<void> {
-    await this.run(conn, async (client) => {
-      if (!isDirectory) {
-        await this.uploadOne(client, localPath, remotePath, progress);
-        return;
-      }
-      progress?.update("Scanning...", 0, 0, 0, 0);
-      const files = this.collectLocal(localPath, remotePath);
-      await this.transfer(files, progress, (file) =>
-        client.uploadFile(file.local, file.remote)
-      );
-    });
+    await this.transferParallel(
+      conn,
+      progress,
+      undefined,
+      async () => {
+        if (!isDirectory) {
+          const size = fs.statSync(localPath).size || 1;
+          return [{ local: localPath, remote: remotePath, size }];
+        }
+        progress?.update("Scanning...", 0, 0, 0, 0);
+        return this.collectLocal(localPath, remotePath);
+      },
+      (client, file) => client.uploadFile(file.local, file.remote)
+    );
   }
 
   async fetchToTemp(conn: Connection, entry: RemoteEntry): Promise<string> {
@@ -81,55 +91,103 @@ export class TransferService {
     return target;
   }
 
-  private async transfer(
-    files: FilePair[],
+  private async transferParallel(
+    conn: Connection,
     progress: TransferProgress | undefined,
-    move: (file: FilePair) => Promise<void>
+    confirm: ConflictResolver | undefined,
+    collect: (client: RemoteClient) => Promise<FilePair[]>,
+    move: (client: RemoteClient, file: FilePair) => Promise<void>
   ): Promise<void> {
-    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
-    let doneFiles = 0;
-    let doneBytes = 0;
-    for (const file of files) {
-      if (progress?.cancelled()) {
+    const secrets = await this.store.secretsOf(conn.id);
+    const clients: RemoteClient[] = [];
+    try {
+      const first = createClient(conn, secrets);
+      await first.connect();
+      clients.push(first);
+
+      const files = await collect(first);
+      const resolved = await this.resolveConflicts(files, confirm);
+      if (!resolved || resolved.length === 0) {
         return;
       }
-      progress?.update(
-        path.basename(file.local),
-        doneFiles,
-        files.length,
-        doneBytes,
-        totalBytes
+
+      const extra = Math.min(this.store.getConcurrency(), resolved.length) - 1;
+      const more = await Promise.allSettled(
+        Array.from({ length: Math.max(0, extra) }, async () => {
+          const client = createClient(conn, secrets);
+          await client.connect();
+          return client;
+        })
       );
-      await move(file);
-      doneFiles += 1;
-      doneBytes += file.size;
+      for (const result of more) {
+        if (result.status === "fulfilled") {
+          clients.push(result.value);
+        }
+      }
+
+      await this.runWorkers(clients, resolved, progress, move);
+    } finally {
+      await Promise.all(clients.map((client) => client.end().catch(() => undefined)));
     }
+  }
+
+  private async runWorkers(
+    clients: RemoteClient[],
+    files: FilePair[],
+    progress: TransferProgress | undefined,
+    move: (client: RemoteClient, file: FilePair) => Promise<void>
+  ): Promise<void> {
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    let next = 0;
+    let doneFiles = 0;
+    let doneBytes = 0;
+
+    const worker = async (client: RemoteClient): Promise<void> => {
+      while (true) {
+        if (progress?.cancelled()) {
+          return;
+        }
+        const index = next++;
+        if (index >= files.length) {
+          return;
+        }
+        const file = files[index];
+        progress?.update(
+          path.basename(file.local),
+          doneFiles,
+          files.length,
+          doneBytes,
+          totalBytes
+        );
+        await move(client, file);
+        doneFiles += 1;
+        doneBytes += file.size;
+      }
+    };
+
+    await Promise.all(clients.map((client) => worker(client)));
     progress?.update("", doneFiles, files.length, doneBytes, totalBytes);
   }
 
-  private async downloadOne(
-    client: RemoteClient,
-    remotePath: string,
-    localTarget: string,
-    progress?: TransferProgress
-  ): Promise<void> {
-    const name = path.basename(remotePath);
-    progress?.update(name, 0, 1, 0, 1);
-    await client.downloadFile(remotePath, localTarget);
-    progress?.update(name, 1, 1, 1, 1);
-  }
-
-  private async uploadOne(
-    client: RemoteClient,
-    localPath: string,
-    remotePath: string,
-    progress?: TransferProgress
-  ): Promise<void> {
-    const name = path.basename(localPath);
-    const size = fs.statSync(localPath).size || 1;
-    progress?.update(name, 0, 1, 0, size);
-    await client.uploadFile(localPath, remotePath);
-    progress?.update(name, 1, 1, size, size);
+  private async resolveConflicts(
+    files: FilePair[],
+    confirm?: ConflictResolver
+  ): Promise<FilePair[] | undefined> {
+    if (!confirm) {
+      return files;
+    }
+    const existing = files.filter((file) => fs.existsSync(file.local));
+    if (existing.length === 0) {
+      return files;
+    }
+    const decision = await confirm(existing.length);
+    if (decision === "cancel") {
+      return undefined;
+    }
+    if (decision === "skip") {
+      return files.filter((file) => !fs.existsSync(file.local));
+    }
+    return files;
   }
 
   private async collectRemote(
@@ -144,7 +202,7 @@ export class TransferService {
     }
     const entries = await client.list(remoteDir);
     for (const entry of entries) {
-      if (isExcludedName(entry.name)) {
+      if (isExcludedName(entry.name) || entry.isSymlink) {
         continue;
       }
       const local = path.join(localDir, entry.name);

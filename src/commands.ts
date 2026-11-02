@@ -2,7 +2,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ConnectionStore } from "./storage/ConnectionStore";
-import { TransferService, TransferProgress } from "./services/TransferService";
+import {
+  TransferService,
+  TransferProgress,
+  ConflictDecision,
+} from "./services/TransferService";
 import { isExcludedName } from "./services/excludes";
 import { ConfigPanel } from "./ui/ConfigPanel";
 import { SettingsPanel } from "./ui/SettingsPanel";
@@ -159,7 +163,8 @@ async function download(
           remotePath,
           isDirectory,
           localTarget,
-          makeReporter(progress, token)
+          makeReporter(progress, token),
+          confirmOverwrite
         );
         vscode.window.showInformationMessage(
           token.isCancellationRequested
@@ -315,6 +320,26 @@ function withProgress(title: string, task: () => Promise<void>): Thenable<void> 
     { location: vscode.ProgressLocation.Notification, title },
     task
   );
+}
+
+async function confirmOverwrite(existingCount: number): Promise<ConflictDecision> {
+  const label =
+    existingCount === 1
+      ? "1 file already exists locally. Overwrite it?"
+      : `${existingCount} files already exist locally. Overwrite them?`;
+  const choice = await vscode.window.showWarningMessage(
+    label,
+    { modal: true },
+    "Overwrite",
+    "Skip existing"
+  );
+  if (choice === "Overwrite") {
+    return "overwrite";
+  }
+  if (choice === "Skip existing") {
+    return "skip";
+  }
+  return "cancel";
 }
 
 function makeReporter(

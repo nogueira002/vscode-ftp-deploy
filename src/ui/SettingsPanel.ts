@@ -47,13 +47,19 @@ export class SettingsPanel {
   private render(): void {
     this.panel.webview.html = renderSettings(
       this.store.all(),
-      this.store.isAutoUploadEnabled()
+      this.store.isAutoUploadEnabled(),
+      this.store.getConcurrency()
     );
   }
 
   private async handle(message: any): Promise<void> {
     if (message.type === "toggleAuto") {
       await this.store.setAutoUpload(message.value);
+      return;
+    }
+    if (message.type === "setConcurrency") {
+      await this.store.setConcurrency(Number(message.value));
+      this.render();
       return;
     }
     if (message.type === "add") {

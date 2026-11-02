@@ -3,6 +3,10 @@ import { Connection, Secrets } from "../types";
 
 const STORAGE_KEY = "ftpDeploy.connections";
 const AUTO_UPLOAD_KEY = "ftpDeploy.autoUpload";
+const CONCURRENCY_KEY = "ftpDeploy.concurrency";
+const DEFAULT_CONCURRENCY = 4;
+const MIN_CONCURRENCY = 1;
+const MAX_CONCURRENCY = 16;
 
 export class ConnectionStore {
   constructor(private context: vscode.ExtensionContext) {}
@@ -17,6 +21,28 @@ export class ConnectionStore {
 
   async setAutoUpload(enabled: boolean): Promise<void> {
     await this.context.globalState.update(AUTO_UPLOAD_KEY, enabled);
+  }
+
+  getConcurrency(): number {
+    const value = this.context.globalState.get<number>(
+      CONCURRENCY_KEY,
+      DEFAULT_CONCURRENCY
+    );
+    return this.clampConcurrency(value);
+  }
+
+  async setConcurrency(value: number): Promise<void> {
+    await this.context.globalState.update(
+      CONCURRENCY_KEY,
+      this.clampConcurrency(value)
+    );
+  }
+
+  private clampConcurrency(value: number): number {
+    if (!Number.isFinite(value)) {
+      return DEFAULT_CONCURRENCY;
+    }
+    return Math.min(MAX_CONCURRENCY, Math.max(MIN_CONCURRENCY, Math.round(value)));
   }
 
   get(id: string): Connection | undefined {

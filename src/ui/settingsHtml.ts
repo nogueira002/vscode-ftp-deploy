@@ -2,7 +2,8 @@ import { Connection } from "../types";
 
 export function renderSettings(
   connections: Connection[],
-  autoUpload: boolean
+  autoUpload: boolean,
+  concurrency: number
 ): string {
   const rows = connections.length
     ? connections.map(serverRow).join("")
@@ -20,6 +21,12 @@ export function renderSettings(
   .toggle { display:flex; align-items:center; gap: 10px; }
   .toggle input { width: 16px; height: 16px; }
   .hint { font-size: 11px; opacity: .6; margin-top: 4px; }
+  .field { display:flex; align-items:center; gap: 10px; }
+  .field input[type="number"] {
+    width: 64px; padding: 4px 6px; border-radius: 3px;
+    border: 1px solid var(--vscode-input-border, rgba(128,128,128,.35));
+    background: var(--vscode-input-background); color: var(--vscode-input-foreground);
+  }
   .server {
     display:flex; align-items:center; justify-content:space-between;
     padding: 10px 12px; border: 1px solid var(--vscode-widget-border, rgba(128,128,128,.25));
@@ -50,6 +57,15 @@ export function renderSettings(
   </div>
 
   <div class="section">
+    <label class="field">
+      Parallel connections
+      <input type="number" id="concurrency" min="1" max="16" step="1" value="${concurrency}">
+    </label>
+    <div class="hint">How many files to transfer at the same time. Higher = faster,
+      but some servers limit simultaneous connections (1–16).</div>
+  </div>
+
+  <div class="section">
     <h3>Servers</h3>
     ${rows}
     <button id="add">+ Add server</button>
@@ -59,6 +75,9 @@ export function renderSettings(
   const vscode = acquireVsCodeApi();
   document.getElementById("autoUpload").addEventListener("change", (e) => {
     vscode.postMessage({ type: "toggleAuto", value: e.target.checked });
+  });
+  document.getElementById("concurrency").addEventListener("change", (e) => {
+    vscode.postMessage({ type: "setConcurrency", value: e.target.value });
   });
   document.getElementById("add").addEventListener("click", () => {
     vscode.postMessage({ type: "add" });
