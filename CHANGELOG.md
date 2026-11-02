@@ -6,6 +6,25 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-02
+
+### Changed
+- Extra parallel connections that the server refuses are now skipped
+  gracefully; the transfer continues with the connections that opened
+  instead of failing.
+
+## [0.2.2] - 2026-11-02
+
+### Added
+- Parallel transfers for faster downloads and uploads of many files.
+- "Parallel connections" setting (1–16) in the Settings page.
+- Overwrite prompt before downloading files that already exist locally
+  (Overwrite / Skip existing / Cancel).
+
+### Changed
+- Symbolic links are skipped during transfers instead of failing.
+- Extra default excludes: venv, .venv, __pycache__.
+
 ## [0.2.1] - 2026-11-02
 
 ### Added
