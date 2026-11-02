@@ -7,6 +7,16 @@
 A VS Code extension for SFTP/FTP deployment: configure servers in a visual
 panel, browse remote files in a sidebar tree, and download or upload files.
 
+## Screenshots
+
+### Configuration panel
+
+![Configuration panel](images/config-panel.png)
+
+### Remote file tree
+
+![Remote file tree](images/remote-tree.png)
+
 ## Features
 
 - **Visual configuration panel** with a **Test connection** button — no JSON
