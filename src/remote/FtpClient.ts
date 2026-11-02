@@ -37,19 +37,9 @@ export class FtpClient implements RemoteClient {
     await this.client.downloadTo(localPath, remotePath);
   }
 
-  async downloadDir(remoteDir: string, localDir: string): Promise<void> {
-    fs.mkdirSync(localDir, { recursive: true });
-    await this.client.downloadToDir(localDir, remoteDir);
-  }
-
   async uploadFile(localPath: string, remotePath: string): Promise<void> {
     await this.ensureDir(path.posix.dirname(remotePath));
     await this.client.uploadFrom(localPath, remotePath);
-  }
-
-  async uploadDir(localDir: string, remoteDir: string): Promise<void> {
-    await this.ensureDir(remoteDir);
-    await this.client.uploadFromDir(localDir, remoteDir);
   }
 
   async end(): Promise<void> {

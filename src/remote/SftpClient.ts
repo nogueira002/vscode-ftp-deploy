@@ -46,36 +46,9 @@ export class SftpClient implements RemoteClient {
     await this.client.fastGet(remotePath, localPath);
   }
 
-  async downloadDir(remoteDir: string, localDir: string): Promise<void> {
-    fs.mkdirSync(localDir, { recursive: true });
-    const entries = await this.list(remoteDir);
-    for (const entry of entries) {
-      const target = path.join(localDir, entry.name);
-      if (entry.isDirectory) {
-        await this.downloadDir(entry.path, target);
-      } else {
-        await this.downloadFile(entry.path, target);
-      }
-    }
-  }
-
   async uploadFile(localPath: string, remotePath: string): Promise<void> {
     await this.ensureDir(path.posix.dirname(remotePath));
     await this.client.fastPut(localPath, remotePath);
-  }
-
-  async uploadDir(localDir: string, remoteDir: string): Promise<void> {
-    await this.ensureDir(remoteDir);
-    const entries = fs.readdirSync(localDir, { withFileTypes: true });
-    for (const entry of entries) {
-      const localPath = path.join(localDir, entry.name);
-      const remotePath = joinRemote(remoteDir, entry.name);
-      if (entry.isDirectory()) {
-        await this.uploadDir(localPath, remotePath);
-      } else {
-        await this.client.fastPut(localPath, remotePath);
-      }
-    }
   }
 
   async end(): Promise<void> {

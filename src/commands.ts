@@ -2,14 +2,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { ConnectionStore } from "./storage/ConnectionStore";
-import { TransferService } from "./services/TransferService";
+import { TransferService, TransferProgress } from "./services/TransferService";
+import { isExcludedName } from "./services/excludes";
 import { ConfigPanel } from "./ui/ConfigPanel";
 import { SettingsPanel } from "./ui/SettingsPanel";
 import { RemoteTreeProvider, TreeNode } from "./ui/RemoteTreeProvider";
 import { Connection } from "./types";
 
 const SKIP = "__skip__";
-const EXCLUDED = ["node_modules", ".git"];
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -146,14 +146,31 @@ async function download(
   const localTarget =
     node.kind === "connection" ? localRoot : path.join(localRoot, name);
 
-  await withProgress(`Downloading "${name}"...`, async () => {
-    try {
-      await service.download(node.conn, remotePath, isDirectory, localTarget);
-      vscode.window.showInformationMessage(`Download complete: ${localTarget}`);
-    } catch (error) {
-      vscode.window.showErrorMessage(`Download failed: ${message(error)}`);
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Downloading "${name}"`,
+      cancellable: true,
+    },
+    async (progress, token) => {
+      try {
+        await service.download(
+          node.conn,
+          remotePath,
+          isDirectory,
+          localTarget,
+          makeReporter(progress, token)
+        );
+        vscode.window.showInformationMessage(
+          token.isCancellationRequested
+            ? "Download cancelled."
+            : `Download complete: ${localTarget}`
+        );
+      } catch (error) {
+        vscode.window.showErrorMessage(`Download failed: ${message(error)}`);
+      }
     }
-  });
+  );
 }
 
 async function uploadWithPick(
@@ -227,12 +244,24 @@ async function uploadResource(
   const relative = path.relative(localRoot, localPath).split(path.sep).join("/");
   const remotePath = conn.remotePath.replace(/\/$/, "") + "/" + relative;
 
-  await withProgress(
-    `Uploading "${path.basename(localPath)}" to "${conn.name}"...`,
-    async () => {
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: `Uploading "${path.basename(localPath)}" to "${conn.name}"`,
+      cancellable: true,
+    },
+    async (progress, token) => {
       try {
-        await service.uploadPath(conn, localPath, remotePath, isDirectory);
-        vscode.window.showInformationMessage(`Uploaded: ${remotePath}`);
+        await service.uploadPath(
+          conn,
+          localPath,
+          remotePath,
+          isDirectory,
+          makeReporter(progress, token)
+        );
+        vscode.window.showInformationMessage(
+          token.isCancellationRequested ? "Upload cancelled." : `Uploaded: ${remotePath}`
+        );
       } catch (error) {
         vscode.window.showErrorMessage(`Upload failed: ${message(error)}`);
       }
@@ -278,8 +307,7 @@ function isInside(root: string, target: string): boolean {
 }
 
 function isExcluded(localPath: string): boolean {
-  const segments = localPath.split(path.sep);
-  return EXCLUDED.some((name) => segments.includes(name));
+  return localPath.split(path.sep).some((segment) => isExcludedName(segment));
 }
 
 function withProgress(title: string, task: () => Promise<void>): Thenable<void> {
@@ -287,6 +315,48 @@ function withProgress(title: string, task: () => Promise<void>): Thenable<void> 
     { location: vscode.ProgressLocation.Notification, title },
     task
   );
+}
+
+function makeReporter(
+  progress: vscode.Progress<{ message?: string; increment?: number }>,
+  token: vscode.CancellationToken
+): TransferProgress {
+  const start = Date.now();
+  let lastPercent = 0;
+  return {
+    cancelled: () => token.isCancellationRequested,
+    update: (fileName, filesDone, filesTotal, bytesDone, bytesTotal) => {
+      if (filesTotal === 0) {
+        progress.report({ message: "Scanning..." });
+        return;
+      }
+      const percent =
+        bytesTotal > 0
+          ? (bytesDone / bytesTotal) * 100
+          : (filesDone / filesTotal) * 100;
+      const increment = percent > lastPercent ? percent - lastPercent : 0;
+      lastPercent = percent;
+      const label = fileName
+        ? `${filesDone}/${filesTotal} · ${fileName}`
+        : `${filesDone}/${filesTotal}`;
+      const eta = formatEta(start, percent);
+      progress.report({
+        increment,
+        message: eta ? `${label} · ~${eta} left` : label,
+      });
+    },
+  };
+}
+
+function formatEta(start: number, percent: number): string {
+  if (percent <= 0 || percent >= 100) {
+    return "";
+  }
+  const elapsed = (Date.now() - start) / 1000;
+  const remaining = Math.max(0, elapsed / (percent / 100) - elapsed);
+  const minutes = Math.floor(remaining / 60);
+  const seconds = Math.round(remaining % 60);
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }
 
 function message(error: unknown): string {
