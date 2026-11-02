@@ -29,12 +29,17 @@ export class TransferService {
     });
   }
 
-  async upload(
+  async uploadPath(
     conn: Connection,
     localPath: string,
-    remotePath: string
+    remotePath: string,
+    isDirectory: boolean
   ): Promise<void> {
-    await this.run(conn, (client) => client.uploadFile(localPath, remotePath));
+    await this.run(conn, (client) =>
+      isDirectory
+        ? client.uploadDir(localPath, remotePath)
+        : client.uploadFile(localPath, remotePath)
+    );
   }
 
   async fetchToTemp(conn: Connection, entry: RemoteEntry): Promise<string> {

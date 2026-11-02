@@ -6,5 +6,6 @@ export interface RemoteClient {
   downloadFile(remotePath: string, localPath: string): Promise<void>;
   downloadDir(remoteDir: string, localDir: string): Promise<void>;
   uploadFile(localPath: string, remotePath: string): Promise<void>;
+  uploadDir(localDir: string, remoteDir: string): Promise<void>;
   end(): Promise<void>;
 }
